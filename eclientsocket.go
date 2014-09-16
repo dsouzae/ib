@@ -99,9 +99,46 @@ func (s *serverHandshake) read(b *bufio.Reader) (err error) {
 	return
 }
 
-// TODO: Add equivalent of EClientSocket.cancelScannerSubscription()
+// CancelScannerSubscription is equivalent of IB API EClientSocket.cancelScannerSubscription().
+type CancelScannerSubscription struct {
+	id int64
+}
 
-// TODO: Add equivalent of EClientSocket.reqScannerParameters()
+// SetId assigns the TWS "tickerId", which was nominated at market data request time.
+func (c *CancelScannerSubscription) SetId(id int64) {
+	c.id = id
+}
+
+func (c *CancelScannerSubscription) Id() int64 {
+	return c.id
+}
+
+func (c *CancelScannerSubscription) code() OutgoingMessageId {
+	return mCancelScannerSubscription
+}
+
+func (c *CancelScannerSubscription) version() int64 {
+	return 1
+}
+
+func (c *CancelScannerSubscription) write(b *bytes.Buffer) (err error) {
+	return writeInt(b, c.id)
+}
+
+// RequestScannerParameters is equivalent of IB API EClientSocket.reqScannerParameters().
+type RequestScannerParameters struct{}
+
+func (r *RequestScannerParameters) code() OutgoingMessageId {
+	return mRequestScannerParameters
+}
+
+func (r *RequestScannerParameters) version() int64 {
+	return 1
+}
+
+func (r *RequestScannerParameters) write(b *bytes.Buffer) (err error) {
+	return nil
+}
 
 // TODO: Add equivalent of EClientSocket.reqScannerSubscription()
 
@@ -452,7 +489,31 @@ func (c *CancelMarketData) write(b *bytes.Buffer) (err error) {
 	return writeInt(b, c.id)
 }
 
-// TODO: Add equivalent of EClientSocket.cancelMktDepth()
+// CancelMarketDepth is equivalent of IB API EClientSocket.cancelMktDepth().
+type CancelMarketDepth struct {
+	id int64
+}
+
+// SetId assigns the TWS "tickerId", which was nominated at market depth request time.
+func (c *CancelMarketDepth) SetId(id int64) {
+	c.id = id
+}
+
+func (c *CancelMarketDepth) Id() int64 {
+	return c.id
+}
+
+func (c *CancelMarketDepth) code() OutgoingMessageId {
+	return mCancelMarketDepth
+}
+
+func (c *CancelMarketDepth) version() int64 {
+	return 1
+}
+
+func (c *CancelMarketDepth) write(b *bytes.Buffer) (err error) {
+	return writeInt(b, c.id)
+}
 
 // TODO: Add equivalent of EClientSocket.exerciseOptions()
 
