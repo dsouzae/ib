@@ -32,7 +32,7 @@ type Order struct {
 	AllOrNone                     bool
 	MinQty                        int64
 	PercentOffset                 float64
-	TrailingStopPrice             float64
+	TrailStopPrice                float64
 	TrailingPercent               float64
 	FAGroup                       string
 	FAProfile                     string
@@ -91,7 +91,7 @@ type Order struct {
 
 type DeltaNeutralData struct {
 	ContractId           int64
-	ClearingSettlingFirm string
+	SettlingFirm         string
 	ClearingAccount      string
 	ClearingIntent       string
 	OpenClose            string

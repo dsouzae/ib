@@ -811,7 +811,7 @@ func (o *OpenOrder) read(b *bufio.Reader) (err error) {
 		if o.Order.DeltaNeutral.ContractId, err = readInt(b); err != nil {
 			return
 		}
-		if o.Order.DeltaNeutral.ClearingSettlingFirm, err = readString(b); err != nil {
+		if o.Order.DeltaNeutral.SettlingFirm, err = readString(b); err != nil {
 			return
 		}
 		if o.Order.DeltaNeutral.ClearingAccount, err = readString(b); err != nil {
@@ -839,7 +839,7 @@ func (o *OpenOrder) read(b *bufio.Reader) (err error) {
 	if o.Order.ReferencePriceType, err = readInt(b); err != nil {
 		return
 	}
-	if o.Order.TrailingStopPrice, err = readFloat(b); err != nil {
+	if o.Order.TrailStopPrice, err = readFloat(b); err != nil {
 		return
 	}
 	if o.Order.TrailingPercent, err = readFloat(b); err != nil {
@@ -965,6 +965,7 @@ func (o *OpenOrder) read(b *bufio.Reader) (err error) {
 		return
 	}
 	if haveUnderComp {
+		o.Contract.UnderComp = new(UnderComp)
 		if o.Contract.UnderComp.ContractId, err = readInt(b); err != nil {
 			return
 		}

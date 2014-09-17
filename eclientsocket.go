@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"time"
+	"math"
 )
 
 // This file ports IB API EClientSocket.java. Please preserve declaration order.
@@ -63,8 +64,8 @@ const (
 	mRequestScannerParameters                     = 24
 	mCancelHistoricalData                         = 25
 	mRequestCurrentTime                           = 49
-	mRequestRealtimeBars                          = 50
-	mCancelRealtimeBars                           = 51
+	mRequestRealTimeBars                          = 50
+	mCancelRealTimeBars                           = 51
 	mRequestFundamentalData                       = 52
 	mCancelFundamentalData                        = 53
 	mRequestCalcImpliedVol                        = 54
@@ -284,7 +285,31 @@ func (c *CancelHistoricalData) write(b *bytes.Buffer) (err error) {
 	return writeInt(b, c.id)
 }
 
-// TODO: Add equivalent of EClientSocket.cancelRealTimeBars()
+// CancelRealTimeBars is equivalent of IB API EClientSocket.cancelRealTimeBars().
+type CancelRealTimeBars struct {
+	id int64
+}
+
+// SetId assigns the TWS "tickerId", which was nominated at market data request time.
+func (c *CancelRealTimeBars) SetId(id int64) {
+	c.id = id
+}
+
+func (c *CancelRealTimeBars) Id() int64 {
+	return c.id
+}
+
+func (c *CancelRealTimeBars) code() OutgoingMessageId {
+	return mCancelRealTimeBars
+}
+
+func (c *CancelRealTimeBars) version() int64 {
+	return 1
+}
+
+func (c *CancelRealTimeBars) write(b *bytes.Buffer) (err error) {
+	return writeInt(b, c.id)
+}
 
 // RequestHistoricalData is equivalent of IB API EClientSocket.requestHistoricalData().
 type RequestHistoricalData struct {
@@ -517,7 +542,466 @@ func (c *CancelMarketDepth) write(b *bytes.Buffer) (err error) {
 
 // TODO: Add equivalent of EClientSocket.exerciseOptions()
 
-// TODO: Add equivalent of EClientSocket.placeOrder()
+// PlaceOrder is equivalent of IB API EClientSocket.placeOrder().
+type PlaceOrder struct {
+	id int64
+	Contract
+	Order
+}
+
+// SetId assigns the TWS "reqId", which is used for reply correlation and request cancellation.
+func (r *PlaceOrder) SetId(id int64) {
+	r.id = id
+}
+
+func (r *PlaceOrder) Id() int64 {
+	return r.id
+}
+
+func (r *PlaceOrder) code() OutgoingMessageId {
+	return mPlaceOrder
+}
+
+func (r *PlaceOrder) version() int64 {
+	return 42
+}
+
+func (r *PlaceOrder) write(b *bytes.Buffer) (err error) {
+	if err = writeInt(b, r.id); err != nil {
+		return
+	}
+	// send contract fields
+	if err = writeInt(b, r.Contract.ContractId); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Symbol); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.SecurityType); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Expiry); err != nil {
+		return
+	}
+	if err = writeFloat(b, r.Contract.Strike); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Right); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Multiplier); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Exchange); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.PrimaryExchange); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Currency); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.LocalSymbol); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.TradingClass); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.SecIdType); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.SecId); err != nil {
+		return
+	}
+
+	// send main order fields
+	if err = writeString(b, r.Order.Action); err != nil {
+		return
+	}
+	if err = writeInt(b, r.Order.TotalQty); err != nil {
+		return
+	}
+	if err = writeString(b, r.Order.OrderType); err != nil {
+		return
+	}
+	if err = writeMaxFloat(b, r.Order.LimitPrice); err != nil {
+		return
+	}
+	if err = writeMaxFloat(b, r.Order.AuxPrice); err != nil {
+		return
+	}
+
+	// send extended order fields
+	if err = writeString(b, r.Order.TIF); err != nil {
+		return
+	}
+	if err = writeString(b, r.Order.OCAGroup); err != nil {
+		return
+	}
+	if err = writeString(b, r.Order.Account); err != nil {
+		return
+	}
+	if err = writeString(b, r.Order.OpenClose); err != nil {
+		return
+	}
+	if err = writeInt(b, r.Order.Origin); err != nil {
+		return
+	}
+	if err = writeString(b, r.Order.OrderRef); err != nil {
+		return
+	}
+	if err = writeBool(b, r.Order.Transmit); err != nil {
+		return
+	}
+	if err = writeInt(b, r.Order.ParentId); err != nil {
+		return
+	}
+	if err = writeBool(b, r.Order.BlockOrder); err != nil {
+		return
+	}
+	if err = writeBool(b, r.Order.SweepToFill); err != nil {
+		return
+	}
+	if err = writeInt(b, r.Order.DisplaySize); err != nil {
+		return
+	}
+	if err = writeInt(b, r.Order.TriggerMethod); err != nil {
+		return
+	}
+	if err = writeBool(b, r.Order.OutsideRTH); err != nil {
+		return
+	}
+	if err = writeBool(b, r.Order.Hidden); err != nil {
+		return
+	}
+	if r.Contract.SecurityType == bagSecType {
+		if len(r.Contract.ComboLegs) == 0 {
+			if err = writeInt(b, int64(0)); err != nil {
+				return
+			}
+		} else {
+			if err = writeInt(b, int64(len((r.Contract.ComboLegs)))); err != nil {
+				return
+			}
+
+			for _, cl := range r.Contract.ComboLegs {
+				if err = writeInt(b, cl.ContractId); err != nil {
+					return
+				}
+				if err = writeInt(b, cl.Ratio); err != nil {
+					return
+				}
+				if err = writeString(b, cl.Action); err != nil {
+					return
+				}
+				if err = writeString(b, cl.Exchange); err != nil {
+					return
+				}
+				if err = writeInt(b, cl.OpenClose); err != nil {
+					return
+				}
+				if err = writeInt(b, cl.ShortSaleSlot); err != nil {
+					return
+				}
+				if err = writeString(b, cl.DesignatedLocation); err != nil {
+					return
+				}
+				if err = writeInt(b, cl.ExemptCode); err != nil {
+					return
+				}
+			}
+		}
+		if len(r.Order.OrderComboLegs) == 0 {
+			if err = writeInt(b, int64(0)); err != nil {
+				return
+			}
+		} else {
+			if err = writeInt(b, int64(len((r.Order.OrderComboLegs)))); err != nil {
+				return
+			}
+
+			for _, ocl := range r.OrderComboLegs {
+				if err = writeMaxFloat(b, ocl.Price); err != nil {
+					return
+				}
+			}
+		}
+
+		if len(r.Order.SmartComboRoutingParams) > 0 {
+			for _, tv := range r.Order.SmartComboRoutingParams {
+				if err = writeString(b, tv.Tag); err != nil {
+					return
+				}
+				if err = writeString(b, tv.Value); err != nil {
+					return
+				}
+			}
+		}
+	}
+
+	// send deprecated sharesAllocation field
+	if err = writeString(b, ""); err != nil {
+		return
+	}
+
+	if err = writeFloat(b, r.Order.DiscretionaryAmount); err != nil {
+		return
+	}
+	if err = writeString(b, r.Order.GoodAfterTime); err != nil {
+		return
+	}
+	if err = writeString(b, r.Order.GoodTillDate); err != nil {
+		return
+	}
+	if err = writeString(b, r.Order.FAGroup); err != nil {
+		return
+	}
+	if err = writeString(b, r.Order.FAMethod); err != nil {
+		return
+	}
+	if err = writeString(b, r.Order.FAPercentage); err != nil {
+		return
+	}
+	if err = writeString(b, r.Order.FAProfile); err != nil {
+		return
+	}
+
+	// institutional short sale slot fields.
+	if err = writeInt(b, r.Order.ShortSaleSlot); err != nil { // 0 only for retail, 1 or 2 only for institution.
+		return
+	}
+	if err = writeString(b, r.Order.DesignatedLocation); err != nil { // only populate whenb, r.Order.m_shortSaleSlot = 2.
+		return
+	}
+	if err = writeInt(b, r.Order.ExemptCode); err != nil {
+		return
+	}
+	if err = writeInt(b, r.Order.OCAType); err != nil {
+		return
+	}
+	if err = writeString(b, r.Order.Rule80A); err != nil {
+		return
+	}
+	if err = writeString(b, r.Order.SettlingFirm); err != nil {
+		return
+	}
+	if err = writeBool(b, r.Order.AllOrNone); err != nil {
+		return
+	}
+	if err = writeMaxInt(b, r.Order.MinQty); err != nil {
+		return
+	}
+	if err = writeMaxFloat(b, r.Order.PercentOffset); err != nil {
+		return
+	}
+	if err = writeInt(b, r.Order.ETradeOnly); err != nil {
+		return
+	}
+	if err = writeBool(b, r.Order.FirmQuoteOnly); err != nil {
+		return
+	}
+	if err = writeMaxFloat(b, r.Order.NBBOPriceCap); err != nil {
+		return
+	}
+	if err = writeMaxInt(b, r.Order.AuctionStrategy); err != nil {
+		return
+	}
+	if err = writeMaxFloat(b, r.Order.StartingPrice); err != nil {
+		return
+	}
+	if err = writeMaxFloat(b, r.Order.StockRefPrice); err != nil {
+		return
+	}
+	if err = writeMaxFloat(b, r.Order.Delta); err != nil {
+		return
+	}
+	if err = writeMaxFloat(b, r.Order.StockRangeLower); err != nil {
+		return
+	}
+	if err = writeMaxFloat(b, r.Order.StockRangeUpper); err != nil {
+		return
+	}
+
+	if err = writeBool(b, r.Order.OverridePercentageConstraints); err != nil {
+		return
+	}
+
+	if err = writeMaxFloat(b, r.Order.Volatility); err != nil {
+		return
+	}
+	if err = writeMaxInt(b, r.Order.VolatilityType); err != nil {
+		return
+	}
+
+	if err = writeString(b, r.Order.DeltaNeutralOrderType); err != nil {
+		return
+	}
+	if err = writeMaxFloat(b, r.Order.DeltaNeutralAuxPrice); err != nil {
+		return
+	}
+
+	if r.Order.DeltaNeutralOrderType != "" {
+		if err = writeInt(b, r.Order.DeltaNeutral.ContractId); err != nil {
+			return
+		}
+		if err = writeString(b, r.Order.DeltaNeutral.SettlingFirm); err != nil {
+			return
+		}
+		if err = writeString(b, r.Order.DeltaNeutral.ClearingAccount); err != nil {
+			return
+		}
+		if err = writeString(b, r.Order.DeltaNeutral.ClearingIntent); err != nil {
+			return
+		}
+		if err = writeString(b, r.Order.DeltaNeutral.OpenClose); err != nil {
+			return
+		}
+		if err = writeBool(b, r.Order.DeltaNeutral.ShortSale); err != nil {
+			return
+		}
+		if err = writeInt(b, r.Order.DeltaNeutral.ShortSaleSlot); err != nil {
+			return
+		}
+		if err = writeString(b, r.Order.DeltaNeutral.DesignatedLocation); err != nil {
+			return
+		}
+	}
+
+	if err = writeInt(b, r.Order.ContinuousUpdate); err != nil {
+		return
+	}
+	if err = writeMaxInt(b, r.Order.ReferencePriceType); err != nil {
+		return
+	}
+	if err = writeMaxFloat(b, r.Order.TrailStopPrice); err != nil {
+		return
+	}
+	if err = writeMaxFloat(b, r.Order.TrailingPercent); err != nil {
+		return
+	}
+
+	if err = writeMaxInt(b, r.Order.ScaleInitLevelSize); err != nil {
+		return
+	}
+	if err = writeMaxInt(b, r.Order.ScaleSubsLevelSize); err != nil {
+		return
+	}
+	if err = writeMaxFloat(b, r.Order.ScalePriceIncrement); err != nil {
+		return
+	}
+
+	if r.Order.ScalePriceIncrement > 0.0 && r.Order.ScalePriceIncrement != math.MaxFloat64 {
+		if err = writeMaxFloat(b, r.Order.ScalePriceAdjustValue); err != nil {
+			return
+		}
+		if err = writeMaxInt(b, r.Order.ScalePriceAdjustInterval); err != nil {
+			return
+		}
+		if err = writeMaxFloat(b, r.Order.ScaleProfitOffset); err != nil {
+			return
+		}
+		if err = writeBool(b, r.Order.ScaleAutoReset); err != nil {
+			return
+		}
+		if err = writeMaxInt(b, r.Order.ScaleInitPosition); err != nil {
+			return
+		}
+		if err = writeMaxInt(b, r.Order.ScaleInitFillQty); err != nil {
+			return
+		}
+		if err = writeBool(b, r.Order.ScaleRandomPercent); err != nil {
+			return
+		}
+	}
+
+	if err = writeString(b, r.Order.ScaleTable); err != nil {
+		return
+	}
+	if err = writeString(b, r.Order.ActiveStartTime); err != nil {
+		return
+	}
+	if err = writeString(b, r.Order.ActiveStopTime); err != nil {
+		return
+	}
+
+	if err = writeString(b, r.Order.HedgeType); err != nil {
+		return
+	}
+	if len(r.Order.HedgeType) > 0 {
+		if err = writeString(b, r.Order.HedgeParam); err != nil {
+			return
+		}
+	}
+
+	if err = writeBool(b, r.Order.OptOutSmartRouting); err != nil {
+		return
+	}
+
+	if err = writeString(b, r.Order.ClearingAccount); err != nil {
+		return
+	}
+	if err = writeString(b, r.Order.ClearingIntent); err != nil {
+		return
+	}
+
+	if err = writeBool(b, r.Order.NotHeld); err != nil {
+		return
+	}
+
+	if r.Contract.UnderComp != nil {
+		if err = writeBool(b, true); err != nil {
+			return
+		}
+		if err = writeInt(b, r.Contract.UnderComp.ContractId); err != nil {
+			return
+		}
+		if err = writeFloat(b, r.Contract.UnderComp.Delta); err != nil {
+			return
+		}
+		if err = writeFloat(b, r.Contract.UnderComp.Price); err != nil {
+			return
+		}
+	} else {
+		if err = writeBool(b, false); err != nil {
+			return
+		}
+	}
+
+	if err = writeString(b, r.Order.AlgoStrategy); err != nil {
+		return
+	}
+	if len(r.Order.AlgoStrategy) > 0 {
+		if err = writeInt(b, int64(len(r.Order.AlgoParams.Params))); err != nil {
+			return
+		}
+		for _, tv := range r.Order.AlgoParams.Params {
+			if err = writeString(b, tv.Tag); err != nil {
+				return
+			}
+			if err = writeString(b, tv.Value); err != nil {
+				return
+			}
+		}
+	}
+
+	if err = writeBool(b, r.Order.WhatIf); err != nil {
+		return
+	}
+
+	// send orderMiscOptions parameter
+	{
+		var miscoptions bytes.Buffer
+		for _, tv := range r.Order.OrderMiscOptions {
+			miscoptions.WriteString(tv.Tag)
+			miscoptions.WriteString("=")
+			miscoptions.WriteString(tv.Value)
+			miscoptions.WriteString(";")
+		}
+		writeString(b, miscoptions.String())
+	}
+
+	return nil
+}
 
 // RequestAccountUpdates is equivalent of IB API EClientSocket.reqAccountUpdates().
 type RequestAccountUpdates struct {
@@ -588,9 +1072,46 @@ func (r *RequestExecutions) write(b *bytes.Buffer) (err error) {
 	return writeString(b, r.Filter.Side)
 }
 
-// TODO: Add equivalent of EClientSocket.cancelOrder()
+// CancelOrder is equivalent of IB API EClientSocket.cancelOrder().
+type CancelOrder struct {
+	id int64
+}
 
-// TODO: Add equivalent of EClientSocket.reqOpenOrders()
+// SetId assigns the TWS "orderId"
+func (c *CancelOrder) SetId(id int64) {
+	c.id = id
+}
+
+func (c *CancelOrder) Id() int64 {
+	return c.id
+}
+
+func (c *CancelOrder) code() OutgoingMessageId {
+	return mCancelOrder
+}
+
+func (c *CancelOrder) version() int64 {
+	return 1
+}
+
+func (c *CancelOrder) write(b *bytes.Buffer) (err error) {
+	return writeInt(b, c.id)
+}
+
+// RequestOpenOrders is equivalent of IB API EClientSocket.reqOpenOrders().
+type RequestOpenOrders struct{}
+
+func (c *RequestOpenOrders) code() OutgoingMessageId {
+	return mRequestOpenOrders
+}
+
+func (c *RequestOpenOrders) version() int64 {
+	return 1
+}
+
+func (c *RequestOpenOrders) write(b *bytes.Buffer) (err error) {
+	return nil
+}
 
 // TODO: Add equivalent of EClientSocket.reqIds()
 
@@ -600,9 +1121,41 @@ func (r *RequestExecutions) write(b *bytes.Buffer) (err error) {
 
 // TODO: Add equivalent of EClientSocket.setServerLogLevel()
 
-// TODO: Add equivalent of EClientSocket.reqAutoOpenOrders()
+// RequestAutoOpenOrders is equivalent of IB API EClientSocket.reqAutoOpenOrders().
+type RequestAutoOpenOrders struct {
+	AutoBind bool
+}
 
-// TODO: Add equivalent of EClientSocket.reqAllOpenOrders()
+func (r *RequestAutoOpenOrders) SetAutoBind(autobind bool) {
+	r.AutoBind = autobind
+}
+
+func (r *RequestAutoOpenOrders) code() OutgoingMessageId {
+	return mRequestAutoOpenOrders
+}
+
+func (r *RequestAutoOpenOrders) version() int64 {
+	return 1
+}
+
+func (r *RequestAutoOpenOrders) write(b *bytes.Buffer) (err error) {
+	return writeBool(b, r.AutoBind)
+}
+
+// RequestAllOpenOrders is equivalent of IB API EClientSocket.reqAllOpenOrders().
+type RequestAllOpenOrders struct{}
+
+func (r *RequestAllOpenOrders) code() OutgoingMessageId {
+	return mRequestAllOpenOrders
+}
+
+func (r *RequestAllOpenOrders) version() int64 {
+	return 1
+}
+
+func (r *RequestAllOpenOrders) write(b *bytes.Buffer) (err error) {
+	return nil
+}
 
 // RequestManagedAccounts is equivalent of IB API EClientSocket.reqManagedAccts().
 type RequestManagedAccounts struct{}
