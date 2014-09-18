@@ -997,7 +997,9 @@ func (r *PlaceOrder) write(b *bytes.Buffer) (err error) {
 			miscoptions.WriteString(tv.Value)
 			miscoptions.WriteString(";")
 		}
-		writeString(b, miscoptions.String())
+		if err = writeString(b, miscoptions.String()); err != nil {
+			return
+		}
 	}
 
 	return nil
