@@ -7,7 +7,6 @@ type InstrumentManager struct {
 	last float64
 	bid  float64
 	ask  float64
-	size int64
 }
 
 func NewInstrumentManager(e *Engine, c Contract) (*InstrumentManager, error) {
@@ -41,7 +40,6 @@ func (i *InstrumentManager) preDestroy() {
 }
 
 func (i *InstrumentManager) receive(r Reply) (UpdateStatus, error) {
-	doupdate := false
 	switch r.(type) {
 	case *ErrorMessage:
 		r := r.(*ErrorMessage)
@@ -53,30 +51,18 @@ func (i *InstrumentManager) receive(r Reply) (UpdateStatus, error) {
 		r := r.(*TickPrice)
 		switch r.Type {
 		case TickLast:
-			doupdate = true
 			i.last = r.Price
-			i.size = r.Size
 		case TickBid:
-			doupdate = true
 			i.bid = r.Price
-			i.size = r.Size
 		case TickAsk:
-			doupdate = true
 			i.ask = r.Price
-			i.size = r.Size
-		case TickLastTimestamp:
-			doupdate = true
-		case TickLastSize:
-			doupdate = true
 		}
-	default:
 	}
 
-	if doupdate {
-		return UpdateTrue, nil
+	if i.last <= 0 && (i.bid <= 0 || i.ask <= 0) {
+		return UpdateFalse, nil
 	}
-
-	return UpdateFalse, nil
+	return UpdateTrue, nil
 }
 
 func (i *InstrumentManager) Bid() float64 {
@@ -95,9 +81,4 @@ func (i *InstrumentManager) Last() float64 {
 	i.rwm.RLock()
 	defer i.rwm.RUnlock()
 	return i.last
-}
-func (i *InstrumentManager) Size() int64 {
-	i.rwm.RLock()
-	defer i.rwm.RUnlock()
-	return i.size
 }
