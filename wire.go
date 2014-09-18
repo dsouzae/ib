@@ -161,7 +161,7 @@ func readTime(b *bufio.Reader, f timeFmt) (t time.Time, err error) {
 }
 
 func writeEOL(b *bytes.Buffer) (err error) {
-	_, err = b.WriteString("\000")
+	err = b.WriteByte('\000')
 	return
 }
 
@@ -179,17 +179,21 @@ func writeFloat(b *bytes.Buffer, f float64) (err error) {
 }
 
 func writeMaxFloat(b *bytes.Buffer, f float64) (err error) {
-    if f == math.MaxFloat64  {
-        writeEOL(b)
-    }
-	return writeFloat(b, f)
+	if f >= math.MaxFloat64 {
+		writeEOL(b)
+	} else {
+		writeFloat(b, f)
+	}
+	return
 }
 
 func writeMaxInt(b *bytes.Buffer, i int64) (err error) {
-    if i == math.MaxInt64  {
-        writeEOL(b)
-    }
-	return writeInt(b, i)
+	if i == math.MaxInt64 {
+		writeEOL(b)
+	} else {
+		writeInt(b, i)
+	}
+	return
 }
 
 func writeBool(b *bytes.Buffer, bo bool) (err error) {
