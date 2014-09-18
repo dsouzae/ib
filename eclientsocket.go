@@ -1172,7 +1172,7 @@ func (r *RequestManagedAccounts) write(b *bytes.Buffer) (err error) {
 	return nil
 }
 
-// TODO: Add equivalent of EClientSocket.reqFA()
+// TODO: Add equivalent of EClientSocket.requestFA()
 
 // TODO: Add equivalent of EClientSocket.replaceFA()
 
