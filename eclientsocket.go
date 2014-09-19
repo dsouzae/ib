@@ -3,8 +3,8 @@ package ib
 import (
 	"bufio"
 	"bytes"
-	"time"
 	"math"
+	"time"
 )
 
 // This file ports IB API EClientSocket.java. Please preserve declaration order.
@@ -141,7 +141,108 @@ func (r *RequestScannerParameters) write(b *bytes.Buffer) (err error) {
 	return nil
 }
 
-// TODO: Add equivalent of EClientSocket.reqScannerSubscription()
+// RequestScannerSubscription is equivalent of IB API EClientSocket.reqScannerSubscription().
+type RequestScannerSubscription struct {
+	id                         int64
+	Subscription               ScannerSubscription
+	ScannerSubscriptionOptions []TagValue
+}
+
+// SetId assigns the TWS "tickerId", used for reply correlation and request cancellation.
+func (r *RequestScannerSubscription) SetId(id int64) {
+	r.id = id
+}
+
+func (r *RequestScannerSubscription) Id() int64 {
+	return r.id
+}
+
+func (r *RequestScannerSubscription) code() OutgoingMessageId {
+	return mRequestScannerSubscription
+}
+
+func (r *RequestScannerSubscription) version() int64 {
+	return 4
+}
+
+func (r *RequestScannerSubscription) write(b *bytes.Buffer) (err error) {
+	if err = writeInt(b, r.id); err != nil {
+		return
+	}
+	if err = writeMaxInt(b, r.Subscription.NumberOfRows); err != nil {
+		return
+	}
+	if err = writeString(b, r.Subscription.Instrument); err != nil {
+		return
+	}
+	if err = writeString(b, r.Subscription.LocationCode); err != nil {
+		return
+	}
+	if err = writeString(b, r.Subscription.ScanCode); err != nil {
+		return
+	}
+	if err = writeMaxFloat(b, r.Subscription.AbovePrice); err != nil {
+		return
+	}
+	if err = writeMaxFloat(b, r.Subscription.BelowPrice); err != nil {
+		return
+	}
+	if err = writeMaxInt(b, r.Subscription.AboveVolume); err != nil {
+		return
+	}
+	if err = writeMaxFloat(b, r.Subscription.MarketCapAbove); err != nil {
+		return
+	}
+	if err = writeMaxFloat(b, r.Subscription.MarketCapBelow); err != nil {
+		return
+	}
+	if err = writeString(b, r.Subscription.MoodyRatingAbove); err != nil {
+		return
+	}
+	if err = writeString(b, r.Subscription.MoodyRatingBelow); err != nil {
+		return
+	}
+	if err = writeString(b, r.Subscription.SPRatingAbove); err != nil {
+		return
+	}
+	if err = writeString(b, r.Subscription.SPRatingBelow); err != nil {
+		return
+	}
+	if err = writeString(b, r.Subscription.MaturityDateAbove); err != nil {
+		return
+	}
+	if err = writeString(b, r.Subscription.MaturityDateBelow); err != nil {
+		return
+	}
+	if err = writeMaxFloat(b, r.Subscription.CouponRateAbove); err != nil {
+		return
+	}
+	if err = writeMaxFloat(b, r.Subscription.CouponRateBelow); err != nil {
+		return
+	}
+	if err = writeString(b, r.Subscription.ExcludeConvertible); err != nil {
+		return
+	}
+	if err = writeMaxInt(b, r.Subscription.AverageOptionVolumeAbove); err != nil {
+		return
+	}
+	if err = writeString(b, r.Subscription.ScannerSettingPairs); err != nil {
+		return
+	}
+	if err = writeString(b, r.Subscription.StockTypeFilter); err != nil {
+		return
+	}
+
+	var subOptions bytes.Buffer
+	subOptions.WriteString("")
+	for _, opt := range r.ScannerSubscriptionOptions {
+		subOptions.WriteString(opt.Tag)
+		subOptions.WriteString("=")
+		subOptions.WriteString(opt.Value)
+		subOptions.WriteString(";")
+	}
+	return writeString(b, subOptions.String())
+}
 
 // RequestMarketData is equivalent of IB API EClientSocket.reqMktData().
 type RequestMarketData struct {
@@ -415,7 +516,92 @@ func (r *RequestHistoricalData) write(b *bytes.Buffer) (err error) {
 	return writeString(b, mktData.String())
 }
 
-// TODO: Add equivalent of EClientSocket.reqRealTimeBars()
+// RequestRealTimeBars is equivalent of IB API EClientSocket.reqRealTimeBars().
+type RequestRealTimeBars struct {
+	id                 int64
+	Contract           Contract
+	BarSize            int64
+	WhatToShow         RealTimeBarToShow
+	UseRTH             bool
+	RealTimeBarOptions []TagValue
+}
+
+// SetId assigns the TWS "reqId", which is used for reply correlation.
+func (r *RequestRealTimeBars) SetId(id int64) {
+	r.id = id
+}
+
+func (r *RequestRealTimeBars) Id() int64 {
+	return r.id
+}
+
+func (r *RequestRealTimeBars) code() OutgoingMessageId {
+	return mRequestRealTimeBars
+}
+
+func (r *RequestRealTimeBars) version() int64 {
+	return 3
+}
+
+func (r *RequestRealTimeBars) write(b *bytes.Buffer) (err error) {
+	if err = writeInt(b, r.id); err != nil {
+		return
+	}
+	if err = writeInt(b, r.Contract.ContractId); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Symbol); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.SecurityType); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Expiry); err != nil {
+		return
+	}
+	if err = writeFloat(b, r.Contract.Strike); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Right); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Multiplier); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Exchange); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.PrimaryExchange); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Currency); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.LocalSymbol); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.TradingClass); err != nil {
+		return
+	}
+	if err = writeInt(b, r.BarSize); err != nil {
+		return
+	}
+	if err = writeString(b, string(r.WhatToShow)); err != nil {
+		return
+	}
+	if err = writeBool(b, r.UseRTH); err != nil {
+		return
+	}
+	var barOption bytes.Buffer
+	barOption.WriteString("")
+	for _, opt := range r.RealTimeBarOptions {
+		barOption.WriteString(opt.Tag)
+		barOption.WriteString("=")
+		barOption.WriteString(opt.Value)
+		barOption.WriteString(";")
+	}
+	return writeString(b, barOption.String())
+}
 
 // RequestContractData is equivalent of IB API EClientSocket.reqContractDetails().
 type RequestContractData struct {
@@ -486,7 +672,81 @@ func (r *RequestContractData) write(b *bytes.Buffer) (err error) {
 	return writeString(b, r.Contract.SecId)
 }
 
-// TODO: Add equivalent of EClientSocket.reqMktDepth()
+// RequestMarketDepth is equivalent of IB API EClientSocket.reqMktDepth().
+type RequestMarketDepth struct {
+	id      int64
+	NumRows int64
+	Contract
+	MarketDepthOptions []TagValue
+}
+
+// SetId assigns the TWS "tickerId", used for reply correlation and request cancellation.
+func (r *RequestMarketDepth) SetId(id int64) {
+	r.id = id
+}
+
+func (r *RequestMarketDepth) Id() int64 {
+	return r.id
+}
+
+func (r *RequestMarketDepth) code() OutgoingMessageId {
+	return mRequestMarketDepth
+}
+
+func (r *RequestMarketDepth) version() int64 {
+	return 5
+}
+
+func (r *RequestMarketDepth) write(b *bytes.Buffer) (err error) {
+	if err = writeInt(b, r.id); err != nil {
+		return
+	}
+	if err = writeInt(b, r.Contract.ContractId); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Symbol); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.SecurityType); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Expiry); err != nil {
+		return
+	}
+	if err = writeFloat(b, r.Contract.Strike); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Right); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Multiplier); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Exchange); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Currency); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.LocalSymbol); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.TradingClass); err != nil {
+		return
+	}
+	if err = writeInt(b, r.NumRows); err != nil {
+		return
+	}
+	var mktDepth bytes.Buffer
+	mktDepth.WriteString("")
+	for _, opt := range r.MarketDepthOptions {
+		mktDepth.WriteString(opt.Tag)
+		mktDepth.WriteString("=")
+		mktDepth.WriteString(opt.Value)
+		mktDepth.WriteString(";")
+	}
+	return writeString(b, mktDepth.String())
+}
 
 // CancelMarketData is equivalent of IB API EClientSocket.cancelMktData().
 type CancelMarketData struct {
@@ -540,7 +800,81 @@ func (c *CancelMarketDepth) write(b *bytes.Buffer) (err error) {
 	return writeInt(b, c.id)
 }
 
-// TODO: Add equivalent of EClientSocket.exerciseOptions()
+// ExerciseOptions is equivalent of IB API EClientSocket.exerciseOptions().
+type ExerciseOptions struct {
+	id int64
+	Contract
+	ExerciseAction   int64
+	ExerciseQuantity int64
+	Account          string
+	Override         int64
+}
+
+// SetId assigns the TWS "tickerId", used for reply correlation and request cancellation.
+func (r *ExerciseOptions) SetId(id int64) {
+	r.id = id
+}
+
+func (r *ExerciseOptions) Id() int64 {
+	return r.id
+}
+
+func (r *ExerciseOptions) code() OutgoingMessageId {
+	return mExerciseOptions
+}
+
+func (r *ExerciseOptions) version() int64 {
+	return 2
+}
+
+func (r *ExerciseOptions) write(b *bytes.Buffer) (err error) {
+	if err = writeInt(b, r.id); err != nil {
+		return
+	}
+	if err = writeInt(b, r.Contract.ContractId); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Symbol); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.SecurityType); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Expiry); err != nil {
+		return
+	}
+	if err = writeFloat(b, r.Contract.Strike); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Right); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Multiplier); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Exchange); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Currency); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.LocalSymbol); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.TradingClass); err != nil {
+		return
+	}
+	if err = writeInt(b, r.ExerciseAction); err != nil {
+		return
+	}
+	if err = writeInt(b, r.ExerciseQuantity); err != nil {
+		return
+	}
+	if err = writeString(b, r.Account); err != nil {
+		return
+	}
+	return writeInt(b, r.Override)
+}
 
 // PlaceOrder is equivalent of IB API EClientSocket.placeOrder().
 type PlaceOrder struct {
@@ -988,21 +1322,15 @@ func (r *PlaceOrder) write(b *bytes.Buffer) (err error) {
 		return
 	}
 
-	// send orderMiscOptions parameter
-	{
-		var miscoptions bytes.Buffer
-		for _, tv := range r.Order.OrderMiscOptions {
-			miscoptions.WriteString(tv.Tag)
-			miscoptions.WriteString("=")
-			miscoptions.WriteString(tv.Value)
-			miscoptions.WriteString(";")
-		}
-		if err = writeString(b, miscoptions.String()); err != nil {
-			return
-		}
+	var miscOptions bytes.Buffer
+	miscOptions.WriteString("")
+	for _, opt := range r.Order.OrderMiscOptions {
+		miscOptions.WriteString(opt.Tag)
+		miscOptions.WriteString("=")
+		miscOptions.WriteString(opt.Value)
+		miscOptions.WriteString(";")
 	}
-
-	return nil
+	return writeString(b, miscOptions.String())
 }
 
 // RequestAccountUpdates is equivalent of IB API EClientSocket.reqAccountUpdates().
@@ -1103,25 +1431,81 @@ func (c *CancelOrder) write(b *bytes.Buffer) (err error) {
 // RequestOpenOrders is equivalent of IB API EClientSocket.reqOpenOrders().
 type RequestOpenOrders struct{}
 
-func (c *RequestOpenOrders) code() OutgoingMessageId {
+func (r *RequestOpenOrders) code() OutgoingMessageId {
 	return mRequestOpenOrders
 }
 
-func (c *RequestOpenOrders) version() int64 {
+func (r *RequestOpenOrders) version() int64 {
 	return 1
 }
 
-func (c *RequestOpenOrders) write(b *bytes.Buffer) (err error) {
+func (r *RequestOpenOrders) write(b *bytes.Buffer) (err error) {
 	return nil
 }
 
-// TODO: Add equivalent of EClientSocket.reqIds()
+// RequestIds is equivalent of IB API EClientSocket.reqIds().
+type RequestIds struct{}
 
-// TODO: Add equivalent of EClientSocket.reqNewsBulletins()
+func (r *RequestIds) code() OutgoingMessageId {
+	return mRequestIds
+}
 
-// TODO: Add equivalent of EClientSocket.cancelNewsBulletins()
+func (r *RequestIds) version() int64 {
+	return 1
+}
 
-// TODO: Add equivalent of EClientSocket.setServerLogLevel()
+func (r *RequestIds) write(b *bytes.Buffer) (err error) {
+	return writeInt(b, 1)
+}
+
+// RequestNewsBulletins is equivalent of IB API EClientSocket.reqNewsBulletins().
+type RequestNewsBulletins struct {
+	AllMsgs bool
+}
+
+func (r *RequestNewsBulletins) code() OutgoingMessageId {
+	return mRequestNewsBulletins
+}
+
+func (r *RequestNewsBulletins) version() int64 {
+	return 1
+}
+
+func (r *RequestNewsBulletins) write(b *bytes.Buffer) (err error) {
+	return writeBool(b, r.AllMsgs)
+}
+
+// CancelNewsBulletins is equivalent of IB API EClientSocket.cancelNewsBulletins().
+type CancelNewsBulletins struct{}
+
+func (c *CancelNewsBulletins) code() OutgoingMessageId {
+	return mCancelNewsBulletins
+}
+
+func (c *CancelNewsBulletins) version() int64 {
+	return 1
+}
+
+func (c *CancelNewsBulletins) write(b *bytes.Buffer) (err error) {
+	return
+}
+
+// SetServerLogLevel is equivalent of IB API EClientSocket.setServerLogLevel().
+type SetServerLogLevel struct {
+	LogLevel int64
+}
+
+func (s *SetServerLogLevel) code() OutgoingMessageId {
+	return mSetServerLogLevel
+}
+
+func (s *SetServerLogLevel) version() int64 {
+	return 1
+}
+
+func (s *SetServerLogLevel) write(b *bytes.Buffer) (err error) {
+	return writeInt(b, s.LogLevel)
+}
 
 // RequestAutoOpenOrders is equivalent of IB API EClientSocket.reqAutoOpenOrders().
 type RequestAutoOpenOrders struct {
@@ -1174,9 +1558,43 @@ func (r *RequestManagedAccounts) write(b *bytes.Buffer) (err error) {
 	return nil
 }
 
-// TODO: Add equivalent of EClientSocket.requestFA()
+// RequestFA is equivalent of IB API EClientSocket.requestFA().
+type RequestFA struct {
+	faDataType int64
+}
 
-// TODO: Add equivalent of EClientSocket.replaceFA()
+func (r *RequestFA) code() OutgoingMessageId {
+	return mRequestFA
+}
+
+func (r *RequestFA) version() int64 {
+	return 1
+}
+
+func (r *RequestFA) write(b *bytes.Buffer) (err error) {
+	return writeInt(b, r.faDataType)
+}
+
+// ReplaceFA is equivalent of IB API EClientSocket.replaceFA().
+type ReplaceFA struct {
+	faDataType int64
+	xml        string
+}
+
+func (r *ReplaceFA) code() OutgoingMessageId {
+	return mReplaceFA
+}
+
+func (r *ReplaceFA) version() int64 {
+	return 1
+}
+
+func (r *ReplaceFA) write(b *bytes.Buffer) (err error) {
+	if err = writeInt(b, r.faDataType); err != nil {
+		return
+	}
+	return writeString(b, r.xml)
+}
 
 // RequestCurrentTime is equivalent of IB API EClientSocket.reqCurrentTime().
 type RequestCurrentTime struct{}
@@ -1193,9 +1611,83 @@ func (r *RequestCurrentTime) write(b *bytes.Buffer) (err error) {
 	return nil
 }
 
-// TODO: Add equivalent of EClientSocket.reqFundamentalData()
+// RequestFundamentalData is equivalent of IB API EClientSocket.reqFundamentalData().
+type RequestFundamentalData struct {
+	id int64
+	Contract
+	ReportType string
+}
 
-// TODO: Add equivalent of EClientSocket.cancelFundamentalData()
+// SetId assigns the TWS "tickerId", used for reply correlation and request cancellation.
+func (r *RequestFundamentalData) SetId(id int64) {
+	r.id = id
+}
+
+func (r *RequestFundamentalData) Id() int64 {
+	return r.id
+}
+
+func (r *RequestFundamentalData) code() OutgoingMessageId {
+	return mRequestFundamentalData
+}
+
+func (r *RequestFundamentalData) version() int64 {
+	return 2
+}
+
+func (r *RequestFundamentalData) write(b *bytes.Buffer) (err error) {
+	if err = writeInt(b, r.id); err != nil {
+		return
+	}
+	if err = writeInt(b, r.Contract.ContractId); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Symbol); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.SecurityType); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Exchange); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.PrimaryExchange); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.Currency); err != nil {
+		return
+	}
+	if err = writeString(b, r.Contract.LocalSymbol); err != nil {
+		return
+	}
+	return writeString(b, r.ReportType)
+}
+
+// CancelFundamentalData is equivalent of IB API EClientSocket.cancelFundamentalData().
+type CancelFundamentalData struct {
+	id int64
+}
+
+// SetId assigns the TWS "orderId"
+func (c *CancelFundamentalData) SetId(id int64) {
+	c.id = id
+}
+
+func (c *CancelFundamentalData) Id() int64 {
+	return c.id
+}
+
+func (c *CancelFundamentalData) code() OutgoingMessageId {
+	return mCancelFundamentalData
+}
+
+func (c *CancelFundamentalData) version() int64 {
+	return 1
+}
+
+func (c *CancelFundamentalData) write(b *bytes.Buffer) (err error) {
+	return writeInt(b, c.id)
+}
 
 // RequestCalcImpliedVol is equivalent of IB API EClientSocket.calculateImpliedVolatility().
 type RequestCalcImpliedVol struct {
@@ -1391,9 +1883,37 @@ func (c *CancelCalcOptionPrice) write(b *bytes.Buffer) (err error) {
 	return writeInt(b, c.id)
 }
 
-// TODO: Add equivalent of EClientSocket.reqGlobalCancel()
+// RequestGlobalCancel is equivalent of IB API EClientSocket.reqGlobalCancel()
+type RequestGlobalCancel struct{}
 
-// TODO: Add equivalent of EClientSocket.reqMarketDataType()
+func (r *RequestGlobalCancel) code() OutgoingMessageId {
+	return mRequestGlobalCancel
+}
+
+func (r *RequestGlobalCancel) version() int64 {
+	return 1
+}
+
+func (r *RequestGlobalCancel) write(b *bytes.Buffer) (err error) {
+	return
+}
+
+// RequestMarketDataType is equivalent of IB API EClientSocket.reqMarketDataType()
+type RequestMarketDataType struct {
+	MarketDataType int64
+}
+
+func (r *RequestMarketDataType) code() OutgoingMessageId {
+	return mRequestMarketDataType
+}
+
+func (r *RequestMarketDataType) version() int64 {
+	return 1
+}
+
+func (r *RequestMarketDataType) write(b *bytes.Buffer) (err error) {
+	return writeInt(b, r.MarketDataType)
+}
 
 // RequestPositions is equivalent of IB API EClientSocket.reqPositions()
 type RequestPositions struct {
@@ -1487,14 +2007,153 @@ func (c *CancelAccountSummary) write(b *bytes.Buffer) (err error) {
 	return writeInt(b, c.id)
 }
 
-// TODO: Add equivalent of EClientSocket.verifyRequest()
+// VerifyRequest is equivalent of IB API EClientSocket.verifyRequest()
+type VerifyRequest struct {
+	apiName    string
+	apiVersion string
+}
 
-// TODO: Add equivalent of EClientSocket.verifyMessage()
+func (v *VerifyRequest) code() OutgoingMessageId {
+	return mVerifyRequest
+}
 
-// TODO: Add equivalent of EClientSocket.queryDisplayGroups()
+func (v *VerifyRequest) version() int64 {
+	return 1
+}
 
-// TODO: Add equivalent of EClientSocket.subscribeToGroupEvents()
+func (v *VerifyRequest) write(b *bytes.Buffer) (err error) {
+	if err = writeString(b, v.apiName); err != nil {
+		return
+	}
 
-// TODO: Add equivalent of EClientSocket.updateDisplayGroup()
+	return writeString(b, v.apiVersion)
+}
 
-// TODO: Add equivalent of EClientSocket.unsubscribeFromGroupEvents()
+// VerifyMessage is equivalent of IB API EClientSocket.verifyMessage()
+type VerifyMessage struct {
+	apiData string
+}
+
+func (v *VerifyMessage) code() OutgoingMessageId {
+	return mVerifyMessage
+}
+
+func (v *VerifyMessage) version() int64 {
+	return 1
+}
+
+func (v *VerifyMessage) write(b *bytes.Buffer) (err error) {
+	return writeString(b, v.apiData)
+}
+
+// QueryDisplayGroups is equivalent of IB API EClientSocket.queryDisplayGroups()
+type QueryDisplayGroups struct {
+	id int64
+}
+
+// SetId assigns the TWS "reqId", which was nominated at request time.
+func (q *QueryDisplayGroups) SetId(id int64) {
+	q.id = id
+}
+
+func (q *QueryDisplayGroups) Id() int64 {
+	return q.id
+}
+
+func (q *QueryDisplayGroups) code() OutgoingMessageId {
+	return mQueryDisplayGroups
+}
+
+func (q *QueryDisplayGroups) version() int64 {
+	return 1
+}
+
+func (q *QueryDisplayGroups) write(b *bytes.Buffer) (err error) {
+	return writeInt(b, q.id)
+}
+
+// SubscribeToGroupEvents is equivalent of IB API EClientSocket.subscribeToGroupEvents()
+type SubscribeToGroupEvents struct {
+	id      int64
+	groupid int64
+}
+
+// SetId assigns the TWS "reqId", which was nominated at request time.
+func (s *SubscribeToGroupEvents) SetId(id int64) {
+	s.id = id
+}
+
+func (s *SubscribeToGroupEvents) Id() int64 {
+	return s.id
+}
+
+func (s *SubscribeToGroupEvents) code() OutgoingMessageId {
+	return mSubscribeToGroupEvents
+}
+
+func (s *SubscribeToGroupEvents) version() int64 {
+	return 1
+}
+
+func (s *SubscribeToGroupEvents) write(b *bytes.Buffer) (err error) {
+	if err = writeInt(b, s.id); err != nil {
+		return
+	}
+	return writeInt(b, s.groupid)
+}
+
+// UpdateDisplayGroup is equivalent of IB API EClientSocket.updateDisplayGroup()
+type UpdateDisplayGroup struct {
+	id           int64
+	ContractInfo string
+}
+
+// SetId assigns the TWS "reqId", which was nominated at request time.
+func (u *UpdateDisplayGroup) SetId(id int64) {
+	u.id = id
+}
+
+func (u *UpdateDisplayGroup) Id() int64 {
+	return u.id
+}
+
+func (u *UpdateDisplayGroup) code() OutgoingMessageId {
+	return mUpdateDisplayGroup
+}
+
+func (u *UpdateDisplayGroup) version() int64 {
+	return 1
+}
+
+func (u *UpdateDisplayGroup) write(b *bytes.Buffer) (err error) {
+	if err = writeInt(b, u.id); err != nil {
+		return
+	}
+	return writeString(b, u.ContractInfo)
+}
+
+// UnsubscribeFromGroupEvents is equivalent of IB API EClientSocket.unsubscribeFromGroupEvents()
+type UnsubscribeFromGroupEvents struct {
+	id int64
+}
+
+// SetId assigns the TWS "reqId", which was nominated at request time.
+func (u *UnsubscribeFromGroupEvents) SetId(id int64) {
+	u.id = id
+}
+
+func (u *UnsubscribeFromGroupEvents) Id() int64 {
+	return u.id
+}
+
+func (u *UnsubscribeFromGroupEvents) code() OutgoingMessageId {
+	return mUnsubscribeFromGroupEvents
+}
+
+func (u *UnsubscribeFromGroupEvents) version() int64 {
+	return 1
+}
+
+func (u *UnsubscribeFromGroupEvents) write(b *bytes.Buffer) (err error) {
+	return writeInt(b, u.id)
+}
